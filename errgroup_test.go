@@ -1,6 +1,7 @@
 package multierrgroup_test
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -18,6 +19,7 @@ func (s *someError) Error() string {
 
 func ExampleMultierror() {
 	var meg multierrgroup.Group
+	ctx := context.Background()
 
 	meg.Go(func() error {
 		return fmt.Errorf("err1")
@@ -30,6 +32,12 @@ func ExampleMultierror() {
 	meg.Go(func() error {
 		return nil
 	})
+
+	someFunc := func(context.Context) error {
+		return nil
+	}
+
+	meg.GoWithContext(ctx, someFunc)
 
 	err := meg.Wait()
 
