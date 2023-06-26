@@ -2,9 +2,8 @@ package multierrgroup
 
 import (
 	"context"
+	"errors"
 	"sync"
-
-	"github.com/hashicorp/go-multierror"
 )
 
 // A Group can perform many operations in parallel, returning all errors that
@@ -13,7 +12,7 @@ import (
 type Group struct {
 	wg     sync.WaitGroup
 	mut    sync.Mutex
-	errs   error
+	errs   []error
 	cancel context.CancelFunc
 }
 
@@ -24,7 +23,7 @@ func (g *Group) Go(f func() error) {
 		defer g.wg.Done()
 		if err := f(); err != nil {
 			g.mut.Lock()
-			g.errs = multierror.Append(g.errs, err)
+			g.errs = append(g.errs, err)
 			if g.cancel != nil {
 				g.cancel()
 			}
@@ -41,7 +40,7 @@ func (g *Group) GoWithContext(ctx context.Context, f func(context.Context) error
 		defer g.wg.Done()
 		if err := f(ctx); err != nil {
 			g.mut.Lock()
-			g.errs = multierror.Append(g.errs, err)
+			g.errs = append(g.errs, err)
 			if g.cancel != nil {
 				g.cancel()
 			}
@@ -53,7 +52,7 @@ func (g *Group) GoWithContext(ctx context.Context, f func(context.Context) error
 // Wait waits for all routines to return and returns the errors, if any.
 func (g *Group) Wait() error {
 	g.wg.Wait()
-	return g.errs
+	return errors.Join(g.errs...)
 }
 
 func WithContext(ctx context.Context) (*Group, context.Context) {

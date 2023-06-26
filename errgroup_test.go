@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/andrewstuart/multierrgroup"
-	"github.com/hashicorp/go-multierror"
 )
 
 type someError struct {
@@ -41,7 +40,13 @@ func ExampleMultierror() {
 
 	err := meg.Wait()
 
-	fmt.Print(err.(*multierror.Error).Len(), ", ")
+	unw, ok := err.(interface {
+		Unwrap() []error
+	})
+	if ok {
+		fmt.Print(len(unw.Unwrap()), ", ")
+	}
+
 	var e *someError
 	if ok := errors.As(err, &e); ok {
 		fmt.Println(e)
