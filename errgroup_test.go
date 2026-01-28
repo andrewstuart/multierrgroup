@@ -16,7 +16,7 @@ func (s *someError) Error() string {
 	return fmt.Sprintf("someerror: %s", string(s.msg))
 }
 
-func ExampleMultierror() {
+func ExampleGroup() {
 	var meg multierrgroup.Group
 	ctx := context.Background()
 
